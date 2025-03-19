@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, MessageFlags, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, MessageFlags, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, PermissionFlagsBits } = require('discord.js');
 module.exports = {
 data :new SlashCommandBuilder()
 	.setName('admin-update-google-sheet')
@@ -10,7 +10,7 @@ data :new SlashCommandBuilder()
             .setRequired(true))
     .addUserOption(option =>
         option.setName('user')
-            .setDescription('The user who will be able to see the message.')
+            .setDescription('The user who will be mentionned in the message.')
             .setRequired(false))
     .addBooleanOption(option =>
         option.setName('skip-sheets-check')
@@ -21,6 +21,10 @@ data :new SlashCommandBuilder()
         const ephemeral = interaction.options.getBoolean('ephemeral');
         const user = interaction.options.getUser('user');
         const skipSheetsCheck = interaction.options.getBoolean('skip-sheets-check') || false;
+        if(user && ephemeral) {
+            await interaction.reply({ content: 'You cannot mention a user and make the message ephemeral at the same time.', ephemeral: true });
+            return;
+        }
         let message= '';
         const row1 = new ActionRowBuilder()
         const row2 = new ActionRowBuilder()
@@ -57,7 +61,7 @@ data :new SlashCommandBuilder()
         }
         const response = await interaction.reply({
             content: message,
-            flags: MessageFlags.Ephemeral,
+            flags: ephemeral? MessageFlags.Ephemeral : 0,
             components: components,
             withResponse: true,
         });
@@ -76,26 +80,24 @@ data :new SlashCommandBuilder()
                     .setLabel('Game Name')
                     .setStyle(TextInputStyle.Short)
                     .setRequired(true);
-                const select = new StringSelectMenuBuilder()
-                    .setCustomId('starter')
-                    .setPlaceholder('Make a selection!')
-                    .addOptions(
-                        new StringSelectMenuOptionBuilder()
-                            .setLabel('Bulbasaur')
-                            .setDescription('The dual-type Grass/Poison Seed Pokémon.')
-                            .setValue('bulbasaur'),
-                        new StringSelectMenuOptionBuilder()
-                            .setLabel('Charmander')
-                            .setDescription('The Fire-type Lizard Pokémon.')
-                            .setValue('charmander'),
-                        new StringSelectMenuOptionBuilder()
-                            .setLabel('Squirtle')
-                            .setDescription('The Water-type Tiny Turtle Pokémon.')
-                            .setValue('squirtle'),
-                    );
+                const gamePublisherInput = new TextInputBuilder()
+                    .setCustomId('game-publisher')
+                    .setLabel('Publisher')
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true);
+                const gameLifespanInput = new TextInputBuilder()
+                    .setCustomId('game-lifespan')
+                    .setLabel('Release and death date in this format :')
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true)
+                    .setMinLength(23)
+                    .setMaxLength(23)
+                    .setPlaceholder('MM/dd/yyyy - MM/dd/yyyy')
+                    .setValue('MM/dd/yyyy - MM/dd/yyyy');
                 const modalRow1 = new ActionRowBuilder().addComponents(gameNameInput);
-                const modalRow2 = new ActionRowBuilder().addComponents(select);
-                modal.addComponents(modalRow1, modalRow2);
+                const modalRow2 = new ActionRowBuilder().addComponents(gamePublisherInput);
+                const modalRow3 = new ActionRowBuilder().addComponents(gameLifespanInput);
+                modal.addComponents(modalRow1, modalRow2, modalRow3);
                 await confirmation.showModal(modal);
             } else if (confirmation.customId === 'game-in-sheets') {
                 await confirmation.update({ content: 'Action cancelled', components: [] });
