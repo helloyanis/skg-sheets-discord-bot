@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, MessageFlags, ActionRowBuilder, ButtonBuilder, ButtonStyle,  PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, MessageFlags, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, PermissionFlagsBits } = require('discord.js');
 module.exports = {
 data :new SlashCommandBuilder()
 	.setName('admin-update-google-sheet')
@@ -55,10 +55,54 @@ data :new SlashCommandBuilder()
             row2.addComponents(gameNotInSheetsButton, gameInSheetsButton);
             components.push(row1, row2);
         }
-        await interaction.reply({
+        const response = await interaction.reply({
             content: message,
             flags: MessageFlags.Ephemeral,
             components: components,
+            withResponse: true,
         });
+
+        
+        const collectorFilter = i => i.user.id === interaction.user.id;
+        try {
+            const confirmation = await response.resource.message.awaitMessageComponent({ filter: collectorFilter, time: 120_000 });
+
+            if (confirmation.customId === 'add-game' || confirmation.customId === 'game-not-in-sheets') {
+                const modal = new ModalBuilder()
+                    .setCustomId('add-game-modal')
+                    .setTitle('Add Game');
+                const gameNameInput = new TextInputBuilder()
+                    .setCustomId('game-name')
+                    .setLabel('Game Name')
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true);
+                const select = new StringSelectMenuBuilder()
+                    .setCustomId('starter')
+                    .setPlaceholder('Make a selection!')
+                    .addOptions(
+                        new StringSelectMenuOptionBuilder()
+                            .setLabel('Bulbasaur')
+                            .setDescription('The dual-type Grass/Poison Seed Pokémon.')
+                            .setValue('bulbasaur'),
+                        new StringSelectMenuOptionBuilder()
+                            .setLabel('Charmander')
+                            .setDescription('The Fire-type Lizard Pokémon.')
+                            .setValue('charmander'),
+                        new StringSelectMenuOptionBuilder()
+                            .setLabel('Squirtle')
+                            .setDescription('The Water-type Tiny Turtle Pokémon.')
+                            .setValue('squirtle'),
+                    );
+                const modalRow1 = new ActionRowBuilder().addComponents(gameNameInput);
+                const modalRow2 = new ActionRowBuilder().addComponents(select);
+                modal.addComponents(modalRow1, modalRow2);
+                await confirmation.showModal(modal);
+            } else if (confirmation.customId === 'game-in-sheets') {
+                await confirmation.update({ content: 'Action cancelled', components: [] });
+            }
+        } catch(e) {
+            console.error(e);
+            await interaction.editReply({ content: 'Confirmation not received within 2 minutes, cancelling', components: [] });
+        }
     }
 }
