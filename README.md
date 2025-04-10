@@ -38,3 +38,49 @@ Run `node .` in the Visual Studio Code terminal
 
 When you edit a command, you need to deploy it to tell Discord you just modified the command.
 Run `node .\deploy-commands.js` in the Visual Studio Code terminal, and it will deploy all of your commands to the server you specified in the `config.json` file (and ONLY in that server.)
+
+# How to integrate Google Sheets
+
+🔧 Step-by-step Setup
+
+### 1. Create a Google Cloud Project
+
+- Go to Google Cloud Console
+
+- Create a new project
+
+### 2. Enable Sheets API
+
+- In your project, go to "APIs & Services > Library"
+
+- Search and enable Google Sheets API
+
+### 3. Create a Service Account
+
+- Go to "IAM & Admin > Service Accounts"
+
+- Create one and give it a name
+
+- After it's created, go to "Keys" and generate a JSON key
+
+- Save that .json file—it’s your credential. **Make sure to not push it or share it publicly, or it will allow anyone to edit your spreadsheet!**
+
+### 4. Share your Sheet with the Service Account
+
+- Open the target Google Sheet
+
+- Click Share
+
+- Use the email from the service account JSON file (something like my-bot@my-project.iam.gserviceaccount.com)
+
+- Give it Editor access
+
+### 5. Edit the Google Sheets client to your preferences
+
+- In this repo, open `utilities/googleSheetsClient.js`
+
+- Change `'YOUR_SERVICE_ACCOUNT_FILE.json'`, `'YOUR_SPREADSHEET_ID'` and `Sheet1!A:D` to the specified properties.
+
+- Change lines 154 and 157 by commenting/decommenting them.
+
+- Don't forget to deploy the commands!
