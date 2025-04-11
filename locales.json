@@ -1,0 +1,30 @@
+{
+    "en": {
+        "description": "Click on this button to open the modal and add a game!",
+        "checkSheets": "Make sure to check the Google Sheets file, and see if it's not already in there!",
+        "gameInSheets": "Game is in Sheets",
+        "gameInSheetsConfirm": "Great! You don't need to do anything then.",
+        "gameNotInSheets": "Game is not in Sheets",
+        "addGame": "Add Game",
+        "checkGoogleSheets": "Check Google Sheets",
+        "gameName": "Game Name",
+        "gamePublisher": "Publisher",
+        "gameLifespan": "Release and death date:",
+        "gameLinks": "Game Links (Website, death announcement…)",
+        "gameNotes": "Extra notes (optional)"
+    },
+    "fr": {
+        "description": "Cliquez sur ce bouton pour ouvrir le modal et ajouter un jeu !",
+        "checkSheets": "Assurez-vous de vérifier le fichier Google Sheets, et de voir s'il n'est pas déjà là !",
+        "gameInSheets": "Le jeu est dans Sheets",
+        "gameInSheetsConfirm": "Super ! Vous n'avez rien à faire alors.",
+        "gameNotInSheets": "Le jeu n'est pas dans Sheets",
+        "addGame": "Ajouter un jeu",
+        "checkGoogleSheets": "Vérifier Google Sheets",
+        "gameName": "Nom du jeu",
+        "gamePublisher": "Éditeur",
+        "gameLifespan": "Date de sortie et de mort :",
+        "gameLinks": "Liens du jeu (Site web, annonce de mort…)",
+        "gameNotes": "Notes supplémentaires (facultatif)"
+    }
+}

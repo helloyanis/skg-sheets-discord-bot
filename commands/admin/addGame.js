@@ -18,51 +18,46 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('add-game')
         .setDescription('Update Google Sheets file with game data.')
-        .addUserOption(option =>
-            option.setName('user')
-                .setDescription('The user who will be mentionned in the message.')
-                .setRequired(false))
         .addBooleanOption(option =>
             option.setName('skip-sheets-check')
                 .setDescription('Skips the user prompt to check the Google Sheets file. Defaults to false.')
                 .setRequired(false)),
 
     async execute(interaction) {
-        const user = interaction.options.getUser('user');
         const skipSheetsCheck = interaction.options.getBoolean('skip-sheets-check') || false;
         let message = '';
+        let localeStrings = require ("../../locales.json")
+        if (!localeStrings[interaction.locale]) {
+            localeStrings[interaction.locale] = localeStrings["en"];
+        }
         const row1 = new ActionRowBuilder();
         const row2 = new ActionRowBuilder();
         const components = [];
 
-        if (user) {
-            message = `Hey ${user.username}!\n`;
-        }
-
         if (skipSheetsCheck) {
-            message += 'Click on this button to open the modal to add a game!';
+            message += localeStrings[interaction.locale]["description"] ?? 'Click on this button to open the modal and add a game!';
             const addGameButton = new ButtonBuilder()
                 .setCustomId('add-game')
-                .setLabel('Add Game')
+                .setLabel(localeStrings[interaction.locale]["addGame"] ?? 'Add Game')
                 .setStyle(ButtonStyle.Primary);
             row1.addComponents(addGameButton);
             components.push(row1);
         } else {
-            message += 'Make sure to check the Google Sheets file, and see if it\'s not already in there!';
+            message += localeStrings[interaction.locale]["checkSheets"] ?? 'Make sure to check the Google Sheets file, and see if it\'s not already in there!';
             const checkSheetsButton = new ButtonBuilder()
-                .setLabel('Check Google Sheets')
+                .setLabel(localeStrings[interaction.locale]["checkGoogleSheets"] ?? 'Check Google Sheets')
                 .setStyle(ButtonStyle.Link)
                 .setURL('https://docs.google.com/spreadsheets/u/2/d/11MyW7y4ybao1oaYiVKbD89npKTVrQBot/htmlview');
             row1.addComponents(checkSheetsButton);
 
             const gameNotInSheetsButton = new ButtonBuilder()
                 .setCustomId('game-not-in-sheets')
-                .setLabel('Game is not in Sheets')
+                .setLabel(localeStrings[interaction.locale]["gameNotInSheets"] ?? 'Game is not in Sheets')
                 .setStyle(ButtonStyle.Primary);
 
             const gameInSheetsButton = new ButtonBuilder()
                 .setCustomId('game-in-sheets')
-                .setLabel('Game is in Sheets')
+                .setLabel(localeStrings[interaction.locale]["gameInSheets"] ?? 'Game is in Sheets')
                 .setStyle(ButtonStyle.Secondary);
 
             row2.addComponents(gameNotInSheetsButton, gameInSheetsButton);
@@ -77,46 +72,55 @@ module.exports = {
         // Set up a component collector (no time limit)
         const collector = reply.createMessageComponentCollector({
             componentType: ComponentType.Button,
-            filter: i => i.user.id === interaction.user.id,
+            //filter: i => i.user.id === interaction.user.id,
         });
 
         collector.on('collect', async (i) => {
             if (i.customId === 'add-game' || i.customId === 'game-not-in-sheets') {
                 const modal = new ModalBuilder()
                     .setCustomId('add-game-modal')
-                    .setTitle('Add Game');
+                    .setTitle(localeStrings[i.locale]["addGame"] ?? 'Add Game');
 
                 const gameNameInput = new TextInputBuilder()
                     .setCustomId('game-name')
-                    .setLabel('Game Name')
+                    .setLabel(localeStrings[i.locale]["gameName"] ?? 'Game Name')
                     .setStyle(TextInputStyle.Short)
                     .setRequired(true);
 
                 const gamePublisherInput = new TextInputBuilder()
                     .setCustomId('game-publisher')
-                    .setLabel('Publisher')
+                    .setLabel(localeStrings[i.locale]["gamePublisher"] ?? 'Publisher')
                     .setStyle(TextInputStyle.Short)
                     .setRequired(true);
 
+                let date2 = new Date();
+                let date1 = new Date(date2.getFullYear() - 1, date2.getMonth(), date2.getDate());
                 const gameLifespanInput = new TextInputBuilder()
                     .setCustomId('game-lifespan')
-                    .setLabel('Release and death date:')
+                    .setLabel(localeStrings[i.locale]["gameLifespan"] ?? 'Release and death date:')
                     .setStyle(TextInputStyle.Short)
                     .setRequired(true)
-                    .setMinLength(23)
-                    .setMaxLength(23)
-                    .setPlaceholder('MM/dd/yyyy - MM/dd/yyyy')
-                    .setValue('MM/dd/yyyy - MM/dd/yyyy');
+                    .setPlaceholder(`${date1.toLocaleDateString(i.locale,
+                        {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric"
+                        })}, ${date2.toLocaleDateString(i.locale,
+                            {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric"
+                            })}`)
 
                 const gameLinks = new TextInputBuilder()
                     .setCustomId('game-links')
-                    .setLabel('Game Links (Home page, death announcement...)')
+                    .setLabel(localeStrings[i.locale]["gameLinks"] ?? 'Game Links (Home page, death announcement...)')
                     .setStyle(TextInputStyle.Paragraph)
                     .setRequired(true);
                 
                 const notes = new TextInputBuilder()
                     .setCustomId('game-notes')
-                    .setLabel('Extra notes (optional)')
+                    .setLabel(localeStrings[i.locale]["gameNotes"] ?? 'Extra notes (optional)')
                     .setStyle(TextInputStyle.Paragraph)
                     .setRequired(false);
 
@@ -131,7 +135,7 @@ module.exports = {
                 await i.showModal(modal);
             } else if (i.customId === 'game-in-sheets') {
                 await i.update({
-                    content: "Great! You don't need to do anything then.",
+                    content: localeStrings[i.locale]["gameInSheetsConfirm"] ?? "Great! You don't need to do anything then.",
                     components: []
                 });
             }
@@ -142,6 +146,8 @@ module.exports = {
             if (!modalInteraction.isModalSubmit()) return;
             if (modalInteraction.customId !== 'add-game-modal') return;
             if (modalInteraction.user.id !== interaction.user.id) return;
+
+            console.log('Modal submitted!');
 
             const name = modalInteraction.fields.getTextInputValue('game-name');
             const publisher = modalInteraction.fields.getTextInputValue('game-publisher');
@@ -158,7 +164,7 @@ module.exports = {
 
             await modalInteraction.editReply({
                 content:
-                    `# **New Game Submission**\n` +
+                    `# **New Game Submission by <@${modalInteraction.user.id}>**\n` +
                     `🪪 **Name:** ${name}\n` +
                     `📣 **Publisher:** ${publisher}\n` +
                     `🪦 **Lifespan:** ${lifespan}\n` +
